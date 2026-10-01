@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚礼花艺现场管理</title>
+<style>
+:root{
+  --green:#3f6b49; --green-2:#5a8f5e; --green-soft:#e8f1e9; --green-line:#bcd0c0;
+  --coral:#e8705c; --coral-2:#ff8a76; --coral-soft:#fdece8;
+  --ink:#24352a; --ink-2:#5a6b5d; --paper:#ffffff; --bg:#f4f7f3;
+  --line:#cddacf; --line-strong:#9db5a2;
+  --warn:#b4631a; --warn-bg:#fdf2e3; --bad:#b4352a; --bad-bg:#fbe7e4; --ok:#2f7d46;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{background:var(--green);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;letter-spacing:1px}
+.badge-ver{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:3px 12px;font-size:12px}
+nav{background:var(--paper);border-bottom:2px solid var(--green-line);display:flex;flex-wrap:wrap;padding:0 12px}
+nav button{border:0;background:none;padding:13px 18px;font-size:14px;color:var(--ink-2);cursor:pointer;border-bottom:3px solid transparent;font-weight:600}
+nav button.active{color:var(--green);border-bottom-color:var(--coral)}
+main{padding:18px 22px;max-width:1280px;margin:0 auto}
+.page{display:none}.page.active{display:block}
+h2{font-size:16px;color:var(--green);margin:4px 0 12px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+@media(max-width:960px){.grid2{grid-template-columns:1fr}}
+/* 表格：边界清楚，操作密集页不丢行 */
+table{border-collapse:collapse;width:100%;background:#fff;font-size:13px}
+th,td{border:1px solid var(--line-strong);padding:7px 9px;text-align:left;vertical-align:middle}
+th{background:var(--green-soft);color:var(--green);font-weight:700;white-space:nowrap}
+tbody tr:nth-child(even){background:#f8fbf8}
+tbody tr:hover{background:#eef6ef}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:1px 8px;border-radius:11px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag-hero{background:var(--coral-soft);color:var(--bad);border:1px solid var(--coral-2)}
+.tag-ok{background:var(--green-soft);color:var(--ok);border:1px solid var(--green-line)}
+.tag-wait{background:var(--warn-bg);color:var(--warn);border:1px solid #e7c495}
+.tag-bad{background:var(--bad-bg);color:var(--bad);border:1px solid #e4a59e}
+.tag-off{background:#e9ece9;color:#77847a;border:1px solid #c5ccc6}
+button.act{border:1px solid var(--green);background:var(--green);color:#fff;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:13px;font-weight:600}
+button.act.coral{border-color:var(--coral);background:var(--coral)}
+button.act.ghost{background:#fff;color:var(--green)}
+button.act.gray{background:#fff;color:var(--ink-2);border-color:var(--line-strong)}
+button.act:disabled{opacity:.45;cursor:not-allowed}
+input,select,textarea{border:1px solid var(--line-strong);border-radius:6px;padding:5px 8px;font-size:13px;font-family:inherit;background:#fff}
+.bar{height:8px;background:#e4ece5;border-radius:5px;overflow:hidden;min-width:90px}
+.bar>i{display:block;height:100%;background:var(--green-2)}
+.bar>i.warn{background:var(--coral-2)}
+.bar>i.over{background:var(--bad)}
+/* 平面图 */
+.floor{width:100%;height:auto;border:1px solid var(--line-strong);border-radius:8px;background:#fbfdfb}
+.floor .zone{cursor:pointer;stroke:var(--green);stroke-width:2}
+.floor .zone.sel{stroke:var(--coral);stroke-width:4}
+.floor .zone.hero{fill:var(--coral-soft)}
+.floor .zone.normal{fill:var(--green-soft)}
+.floor text{font-family:inherit;pointer-events:none}
+.toast{position:fixed;right:18px;bottom:18px;max-width:420px;z-index:99}
+.toast div{border-radius:8px;padding:10px 14px;margin-top:8px;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:13px}
+.toast .ok{background:var(--ok)}.toast .err{background:var(--bad)}.toast .info{background:var(--green)}
+.compare{display:grid;grid-template-columns:1fr 32px 1fr;gap:0;align-items:stretch;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden}
+.compare .col{padding:8px;text-align:center;background:#fff}
+.compare .col+ .col{border-left:none}
+.compare img{width:100%;height:150px;object-fit:cover;border:1px solid var(--line);border-radius:6px;background:#f7faf6}
+.compare .arrow{display:flex;align-items:center;justify-content:center;background:var(--green-soft);color:var(--green);font-size:20px;font-weight:700}
+.compare .cap{font-size:12px;color:var(--ink-2);margin-top:5px;line-height:1.5}
+.swap{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--coral-soft);border:1px dashed var(--coral-2);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:13px}
+.stat{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.stat .s{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 16px;min-width:130px}
+.stat .s b{display:block;font-size:20px;color:var(--green);font-variant-numeric:tabular-nums}
+.stat .s span{font-size:12px;color:var(--ink-2)}
+.muted{color:var(--ink-2);font-size:12px}
+.rowline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{font-size:12px;border:1px solid var(--line-strong);border-radius:11px;padding:1px 9px;background:#fff}
+.log{font-size:12px;max-height:260px;overflow:auto}
+.log .r{padding:4px 6px;border-bottom:1px dashed var(--line)}
+.log .r b{font-weight:700}
+.kind-成功{color:var(--ok)} .kind-重复领料,.kind-未授权替换{color:var(--bad)}
+.kind-超配额,.kind-库存不足{color:var(--warn)} .kind-版本过期{color:#77847a}
+.thumb{width:74px;height:56px;object-fit:cover;border:1px solid var(--line-strong);border-radius:5px;background:#f7faf6}
+.diff-pos{color:var(--ok);font-weight:700}.diff-neg{color:var(--coral);font-weight:700}
+.total-row td{background:var(--green-soft);font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <h1>💐 婚礼花艺现场管理</h1>
+  <span class="badge-ver" id="verTag">版本加载中…</span>
+  <span class="badge-ver" id="dateTag">2026-09-30 布场日</span>
+</header>
+<nav>
+  <button data-page="quota" class="active">花材配额</button>
+  <button data-page="qc">到货质检</button>
+  <button data-page="pickup">区域领料</button>
+  <button data-page="sub">替换确认</button>
+  <button data-page="onsite">现场核对</button>
+  <button data-page="bill">结算</button>
+</nav>
+<main>
+  <!-- 1. 花材配额：平面图 + 清单 -->
+  <section class="page active" id="page-quota">
+    <div class="grid2">
+      <div class="card">
+        <h2>区域平面图（点击区域查看花材清单）</h2>
+        <svg class="floor" id="floor" viewBox="0 0 1000 520"></svg>
+        <p class="muted" id="floorHint"></p>
+      </div>
+      <div class="card">
+        <h2 id="areaTitle">区域花材清单</h2>
+        <div id="areaList"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>全场花材库存占用（合格到货 − 已领 / 计划 + 追加）</h2>
+      <table><thead><tr>
+        <th>品种</th><th>颜色</th><th class="num">单价</th>
+        <th class="num">计划枝数</th><th class="num">追加</th>
+        <th class="num">合格到货</th><th class="num">已领</th><th class="num">可用</th><th>占用情况</th>
+      </tr></thead><tbody id="flowerTbody"></tbody></table>
+    </div>
+  </section>
+
+  <!-- 2. 到货质检 -->
+  <section class="page" id="page-qc">
+    <div class="card">
+      <h2>到货批次验收</h2>
+      <p class="muted">到货萎蔫 / 提前开花 / 运输折损须登记不合格枝数与原因；合格 + 不合格须等于到货枝数。</p>
+      <table><thead><tr>
+        <th>批次</th><th>花材</th><th>到货日</th><th class="num">到货</th><th>冷藏位置</th>
+        <th>质检状态</th><th class="num">合格</th><th class="num">不合格</th><th>不合格原因</th><th>验收操作</th>
+      </tr></thead><tbody id="batchTbody"></tbody></table>
+    </div>
+  </section>
+
+  <!-- 3. 区域领料 -->
+  <section class="page" id="page-pickup">
+    <div class="card">
+      <h2>按区域领料</h2>
+      <div class="rowline" style="margin-bottom:10px">
+        <label>领料组 <input id="pkCrew" value="花艺一组" style="width:110px"></label>
+        <label>区域 <select id="pkArea"></select></label>
+        <label>花材 <select id="pkFlower"></select></label>
+        <label>枝数 <input id="pkStems" type="number" min="1" value="10" style="width:80px"></label>
+        <button class="act coral" id="pkGo">领料</button>
+        <span class="muted">同枝数预算不能被两个区域重复占用；配额领满再领即记"重复领料"。</span>
+      </div>
+      <div id="pkTable"></div>
+    </div>
+    <div class="card">
+      <h2>领料尝试留痕（成功 / 超配额 / 重复领料 / 未授权替换 / 库存不足）</h2>
+      <div class="log" id="attemptLog"></div>
+    </div>
+  </section>
+
+  <!-- 4. 替换确认 -->
+  <section class="page" id="page-sub">
+    <div class="card">
+      <h2>缺货替代单 · 客户确认</h2>
+      <p class="muted">每张替代单关联具体清单版本；版本修订后旧单自动过期。<b>主视觉区域（珊瑚色标记）未经客户确认，布置端不能领料替换。</b></p>
+      <div id="subList"></div>
+    </div>
+  </section>
+
+  <!-- 5. 现场核对 -->
+  <section class="page" id="page-onsite">
+    <div class="grid2">
+      <div class="card">
+        <h2>现场临时追加</h2>
+        <div class="rowline">
+          <label>区域 <select id="adArea"></select></label>
+          <label>花材 <select id="adFlower"></select></label>
+          <label>枝数 <input id="adStems" type="number" min="1" value="10" style="width:70px"></label>
+        </div>
+        <div class="rowline" style="margin:8px 0">
+          <input id="adReason" placeholder="追加原因（如：迎宾牌加角花）" style="flex:1;min-width:200px">
+          <button class="act" id="adGo">登记追加（计入配额与结算）</button>
+        </div>
+        <table><thead><tr><th>区域</th><th>花材</th><th class="num">枝数</th><th>原因</th></tr></thead>
+        <tbody id="addTbody"></tbody></table>
+        <h2 style="margin-top:16px">撤场回收</h2>
+        <div class="rowline">
+          <label>区域 <select id="tdArea"></select></label>
+          <label>花材 <select id="tdFlower"></select></label>
+          <label>枝数 <input id="tdStems" type="number" min="0" value="20" style="width:70px"></label>
+          <label>状况 <select id="tdCond"><option>完好可复用</option><option>折损报废</option></select></label>
+          <button class="act gray" id="tdGo">登记回收</button>
+        </div>
+        <table style="margin-top:8px"><thead><tr><th>区域</th><th>花材</th><th class="num">回收</th><th>状况</th></tr></thead>
+        <tbody id="tdTbody"></tbody></table>
+      </div>
+      <div class="card">
+        <h2>完工 / 核对照片上传（本地保存）</h2>
+        <div class="rowline">
+          <label>区域 <select id="phArea"></select></label>
+          <label>类型 <select id="phKind"><option>完工</option><option>核对</option><option>撤场</option></select></label>
+          <input type="file" id="phFile" accept="image/*,.svg">
+          <button class="act" id="phGo">上传</button>
+        </div>
+        <div id="photoList" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>现场核对：各区域配额 / 实领对照</h2>
+      <div id="onsiteTable"></div>
+    </div>
+  </section>
+
+  <!-- 6. 结算 -->
+  <section class="page" id="page-bill">
+    <div class="card">
+      <h2>结算单（按区域 × 花材：计划 / 替代价差 / 临时追加 / 回收抵扣）</h2>
+      <div class="stat" id="billStat"></div>
+      <table><thead><tr>
+        <th>区域</th><th>类型</th><th>花材</th><th>颜色</th>
+        <th class="num">枝数</th><th class="num">单价</th><th class="num">每枝价差</th><th class="num">金额</th><th>备注</th>
+      </tr></thead><tbody id="billTbody"></tbody>
+      <tfoot><tr class="total-row"><td colspan="7">应付合计（已扣完好回收）</td><td class="num" id="billNet"></td><td id="billVer"></td></tr></tfoot>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>

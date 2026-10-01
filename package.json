@@ -1,0 +1,15 @@
+{
+  "name": "wedding-floral-ops",
+  "version": "1.0.0",
+  "description": "婚礼花艺区域花材配额、到货质检、区域领料、替换确认、现场核对与结算系统",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/seed.js && node src/server.js",
+    "seed": "node src/seed.js",
+    "test": "node --test --experimental-sqlite"
+  }
+}
