@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>花艺婚礼管理 · 花材配额与现场执行</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo"></span>花语 · 婚礼花艺执行台</div>
+  <nav class="tabs" id="tabs">
+    <button data-page="quota" class="active">花材配额</button>
+    <button data-page="arrivals">到货质检</button>
+    <button data-page="picks">区域领料</button>
+    <button data-page="substitutions">替换确认</button>
+    <button data-page="verify">现场核对</button>
+    <button data-page="settlement">结算</button>
+  </nav>
+  <div class="spacer"></div>
+  <button class="bell" id="bell">🔔 通知 <span class="dot" id="notif-dot">0</span></button>
+  <div class="notif-panel" id="notif-panel"></div>
+</header>
+
+<main>
+  <!-- ================= 花材配额 ================= -->
+  <section class="page active" id="page-quota">
+    <h2 class="page-title">花材配额 · 区域平面图</h2>
+    <p class="page-sub">点击平面图区域查看该区域花材清单与版本；同一花材枝数为全局共享库存，两个区域不能重复占用。<span class="badge coral">珊瑚框=主视觉区域</span></p>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>🗺️ 婚礼区域平面图</h3>
+        <div class="floorplan" id="floorplan"><span class="hall-label">WEDDING HALL</span></div>
+        <p class="small muted" style="margin:10px 0 0">虚线框为普通区域，珊瑚实线框为主视觉区域，替换主视觉花材必须客户确认。</p>
+      </div>
+      <div class="card" id="quota-detail">
+        <h3>📋 区域花材清单</h3>
+        <div id="quota-zone-body"><p class="muted">请在左侧平面图选择一个区域。</p></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🌿 全局花材库存占用</h3>
+      <p class="small muted">可用 = 质检入库枝数 − 全部区域已领枝数；为 0 或缺货时到「替换确认」发起替代提案。</p>
+      <div class="tbl-wrap"><table class="tbl" id="stock-tbl"></table></div>
+    </div>
+  </section>
+
+  <!-- ================= 到货质检 ================= -->
+  <section class="page" id="page-arrivals">
+    <h2 class="page-title">到货质检</h2>
+    <p class="page-sub">采购到货先登记，再验收；萎蔫 / 提前开花 / 运输折损均记录折损枝数并通知团队。</p>
+    <div class="card">
+      <h3>📦 登记到货</h3>
+      <div class="form-row">
+        <label class="fld">花材<select id="ar-flower"></select></label>
+        <label class="fld">到货枝数<input id="ar-stems" type="number" min="1" value="50"></label>
+        <label class="fld">到货日<input id="ar-date" type="date"></label>
+        <label class="fld">冷藏位置<input id="ar-cold" placeholder="如 A1-03"></label>
+        <button class="btn primary" id="ar-receive">登记到货</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔎 到货批次与验收</h3>
+      <div class="tbl-wrap"><table class="tbl" id="arrival-tbl"></table></div>
+    </div>
+  </section>
+
+  <!-- ================= 区域领料 ================= -->
+  <section class="page" id="page-picks">
+    <h2 class="page-title">区域领料</h2>
+    <p class="page-sub">布置人员按区域、按已确认清单版本领料；多组人员重复领料全部留痕并自动预警；库存不足直接拒绝。</p>
+    <div class="card">
+      <h3>🙋 新建领料</h3>
+      <div class="form-row">
+        <label class="fld">区域<select id="pk-zone"></select></label>
+        <label class="fld">花材<select id="pk-flower"></select></label>
+        <label class="fld">枝数<input id="pk-stems" type="number" min="1" value="10"></label>
+        <label class="fld">领料小组<input id="pk-crew" placeholder="如 A组 / 花艺二组"></label>
+        <label class="fld">依据<select id="pk-reason">
+          <option value="quota">清单配额（已确认版本）</option>
+          <option value="substitution">已确认的替换</option>
+          <option value="adhoc">现场临时追加单</option>
+        </select></label>
+        <label class="fld" id="pk-ref-wrap" style="display:none">关联单据<select id="pk-ref"></select></label>
+        <button class="btn primary" id="pk-go">领料</button>
+      </div>
+      <div id="pk-warn"></div>
+    </div>
+    <div class="card">
+      <h3>🧾 领料流水（含重复领料预警）</h3>
+      <div class="tbl-wrap"><table class="tbl" id="pick-tbl"></table></div>
+    </div>
+  </section>
+
+  <!-- ================= 替换确认 ================= -->
+  <section class="page" id="page-substitutions">
+    <h2 class="page-title">缺货替换确认</h2>
+    <p class="page-sub">列出替代花材、价差与视觉差异供客户确认；确认关联具体清单版本，版本更新后旧提案自动过期；<b>主视觉区域未经确认不能替换</b>。</p>
+    <div class="card">
+      <h3>🌸 发起缺货替代提案</h3>
+      <div class="form-row">
+        <label class="fld">区域<select id="sb-zone"></select></label>
+        <label class="fld">原花材<select id="sb-original"></select></label>
+        <label class="fld">原枝数<input id="sb-ostems" type="number" min="1" value="20"></label>
+        <label class="fld">替代花材<select id="sb-sub"></select></label>
+        <label class="fld">替代枝数<input id="sb-sstems" type="number" min="1" value="20"></label>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <label class="fld" style="flex:2">视觉差异说明<textarea id="sb-visual" placeholder="花型 / 色调 / 体量 / 焦点变化……"></textarea></label>
+        <button class="btn coral" id="sb-propose">生成提案并通知客户</button>
+      </div>
+      <p class="small muted" id="sb-price-preview"></p>
+    </div>
+    <div id="sub-list"></div>
+  </section>
+
+  <!-- ================= 现场核对 ================= -->
+  <section class="page" id="page-verify">
+    <h2 class="page-title">现场核对</h2>
+    <p class="page-sub">按区域核对实际布置、效果图与完工照片，记录萎蔫/开花/折损/追加/回收等现场情况。</p>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>✅ 区域核对状态</h3>
+        <div id="verify-zones"></div>
+      </div>
+      <div class="card">
+        <h3>📸 上传完工照片</h3>
+        <div class="form-row">
+          <label class="fld">区域<select id="ph-zone"></select></label>
+          <label class="fld">照片<input type="file" id="ph-file" accept="image/*"></label>
+          <label class="fld">备注<input id="ph-label" placeholder="可选"></label>
+          <button class="btn primary" id="ph-upload">上传</button>
+        </div>
+        <p class="small muted">照片保存在本地 data/uploads。</p>
+        <div id="verify-photos" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>⚠️ 现场异常记录</h3>
+        <div class="form-row">
+          <label class="fld">类型<select id="in-kind">
+            <option value="wilt">到货/现场萎蔫</option>
+            <option value="bloom">提前开花</option>
+            <option value="damage">运输折损</option>
+            <option value="addition">现场追加</option>
+            <option value="recycle">撤场回收</option>
+          </select></label>
+          <label class="fld">区域<select id="in-zone"><option value="">—</option></select></label>
+          <label class="fld">花材<select id="in-flower"><option value="">—</option></select></label>
+          <label class="fld">枝数<input id="in-stems" type="number" min="0" value="0"></label>
+        </div>
+        <div class="form-row" style="margin-top:10px">
+          <label class="fld" style="flex:2">说明<textarea id="in-note"></textarea></label>
+          <button class="btn ghost" id="in-add">记录</button>
+        </div>
+        <div class="tbl-wrap" style="margin-top:12px"><table class="tbl" id="incident-tbl"></table></div>
+      </div>
+      <div class="card">
+        <h3>♻️ 撤场回收登记</h3>
+        <div class="form-row">
+          <label class="fld">区域<select id="rc-zone"></select></label>
+          <label class="fld">花材<select id="rc-flower"></select></label>
+          <label class="fld">回收枝数<input id="rc-stems" type="number" min="1" value="10"></label>
+        </div>
+        <div class="form-row" style="margin-top:10px">
+          <label class="fld" style="flex:2">备注<textarea id="rc-note" placeholder="如状态良好二次利用"></textarea></label>
+          <button class="btn ghost" id="rc-add">登记回收</button>
+        </div>
+        <div class="tbl-wrap" style="margin-top:12px"><table class="tbl" id="recycle-tbl"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 结算 ================= -->
+  <section class="page" id="page-settlement">
+    <h2 class="page-title">结算</h2>
+    <p class="page-sub">按区域汇总：已确认清单金额 + 客户确认替换价差 + 现场追加；附领料、回收与质检损耗。</p>
+    <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:12px" id="settle-cards"></div>
+    <div class="card" style="margin-top:16px">
+      <h3>💳 分区结算明细</h3>
+      <div id="settle-zones"></div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+<script src="/js/app.js"></script>
+</body>
+</html>
